@@ -1,0 +1,8 @@
+pandas>=2.0
+numpy
+plotly>=5.20
+dash>=2.16
+scikit-learn
+xgboost
+joblib
+jupyter
