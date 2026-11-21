@@ -26,3 +26,5 @@ Thumbs.db
 *.pkl
 *.db
 data/analytics/data/processed/*.csv
+
+*.db
