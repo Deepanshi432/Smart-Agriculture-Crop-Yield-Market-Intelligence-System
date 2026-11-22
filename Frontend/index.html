@@ -3,141 +3,420 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Agriculture — Crop Yield & Market Intelligence</title>
+  <title>Smart Agro — Crop Yield & Market Intelligence</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #f4f7f5;
-      color: #1f2933;
+    :root {
+      --bg-cream: #f4f1ea;
+      --forest-dark: #1d2b22;
+      --forest-mid: #27392d;
+      --forest-card: #223227;
+      --gold: #e5a93c;
+      --gold-hover: #cf9226;
+      --sage-text: #d8e2dc;
+      --muted-text: #9fb0a5;
+      --ink-dark: #1c261f;
+      --border-soft: rgba(255, 255, 255, 0.12);
     }
-    header {
-      background: #1b5e20;
-      color: #fff;
-      padding: 18px 28px;
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg-cream);
+      color: var(--ink-dark);
+      line-height: 1.5;
+    }
+
+    /* Top Navigation */
+    .navbar {
+      background: var(--forest-dark);
+      color: #ffffff;
+      padding: 14px 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 14px;
+      border-bottom: 1px solid var(--border-soft);
     }
-    header a {
-      color: #e8f5e9;
-      text-decoration: none;
-      border: 1px solid #a5d6a7;
-      padding: 6px 12px;
-      border-radius: 6px;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
       font-size: 14px;
     }
-    .container {
-      max-width: 1100px;
-      margin: 24px auto;
-      padding: 0 16px;
+
+    .nav-links a {
+      color: var(--sage-text);
+      text-decoration: none;
     }
-    .kpis {
+
+    .nav-links a:hover {
+      color: var(--gold);
+    }
+
+    .btn-pill {
+      background: var(--gold);
+      color: var(--ink-dark) !important;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .btn-pill:hover {
+      background: var(--gold-hover);
+    }
+
+    /* Hero Banner */
+    .hero {
+      position: relative;
+      background:
+        linear-gradient(90deg, rgba(16, 26, 20, 0.88) 0%, rgba(16, 26, 20, 0.62) 55%, rgba(16, 26, 20, 0.35) 100%),
+        url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80") center/cover no-repeat;
+      color: #ffffff;
+      padding: 68px 32px;
+    }
+
+    .hero-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 {
+      margin: 0 0 12px 0;
+      font-size: clamp(30px, 4.5vw, 48px);
+      line-height: 1.15;
+      font-weight: 700;
+      max-width: 680px;
+    }
+
+    .hero h1 span {
+      color: var(--gold);
+    }
+
+    .hero p {
+      margin: 0 0 22px 0;
+      color: var(--sage-text);
+      max-width: 560px;
+      font-size: 15px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-outline {
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      color: #ffffff;
+      padding: 9px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1160px;
+      margin: -34px auto 48px auto;
+      padding: 0 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* KPI Strip */
+    .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 18px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      margin-bottom: 20px;
+
+    .kpi-card {
+      background: var(--forest-dark);
+      color: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 8px 20px rgba(20, 31, 24, 0.12);
     }
+
     .kpi-label {
-      font-size: 13px;
-      color: #52606d;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted-text);
       margin-bottom: 6px;
     }
+
     .kpi-value {
-      font-size: 26px;
-      font-weight: bold;
-      color: #1b5e20;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
     }
+
+    /* Two-Column Workspace */
     .grid-2 {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 20px;
+      margin-bottom: 22px;
     }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(28, 38, 31, 0.06);
+      border: 1px solid #e5e1d8;
+    }
+
+    .panel-dark {
+      background: var(--forest-dark);
+      color: #ffffff;
+      border: 1px solid var(--border-soft);
+    }
+
+    .panel h3 {
+      margin: 0 0 14px 0;
+      font-size: 20px;
+    }
+
     label {
       display: block;
-      font-size: 13px;
-      font-weight: bold;
-      margin-top: 10px;
-      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 12px;
+      margin-bottom: 5px;
+      color: #425247;
     }
-    select, input, button {
+
+    select, input {
       width: 100%;
-      padding: 9px 10px;
-      border-radius: 6px;
-      border: 1px solid #cbd2d9;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #cfd6cf;
       font-size: 14px;
-      box-sizing: border-box;
+      background: #fafaf7;
+      color: var(--ink-dark);
     }
-    button {
-      background: #2e7d32;
-      color: #fff;
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 18px;
+      padding: 12px;
       border: none;
-      font-weight: bold;
-      margin-top: 14px;
+      border-radius: 8px;
+      background: var(--gold);
+      color: var(--ink-dark);
+      font-weight: 700;
+      font-size: 14px;
       cursor: pointer;
     }
-    button:hover {
-      background: #1b5e20;
+
+    .btn-primary:hover {
+      background: var(--gold-hover);
     }
+
     .result-box {
-      margin-top: 14px;
-      padding: 12px;
-      background: #e8f5e9;
-      border-left: 4px solid #2e7d32;
-      border-radius: 6px;
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      background: #eef5ef;
+      border-left: 4px solid var(--forest-dark);
       font-size: 14px;
     }
+
+    /* Interactive Crop Strip */
+    .crop-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .crop-pill {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      background: var(--forest-mid);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      color: var(--sage-text);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    }
+
+    .crop-pill:hover {
+      border-color: var(--gold);
+      transform: translateY(-1px);
+    }
+
+    .crop-pill.active,
+    .crop-pill.highlight {
+      background: var(--gold);
+      color: var(--ink-dark);
+      border-color: var(--gold);
+    }
+
+    /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 14px;
     }
+
     th, td {
+      padding: 10px 12px;
       text-align: left;
-      padding: 8px 10px;
-      border-bottom: 1px solid #e4e7eb;
+      border-bottom: 1px solid #e7e4dc;
     }
+
+    .panel-dark th, .panel-dark td {
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--sage-text);
+    }
+
     th {
-      background: #f0f4f8;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #5b6b60;
+      background: #f6f4ee;
+    }
+
+    .panel-dark th {
+      background: var(--forest-mid);
+      color: var(--gold);
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      max-width: 480px;
+      margin-bottom: 14px;
+    }
+
+    .btn-search {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: var(--gold);
+      color: var(--ink-dark);
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    footer {
+      background: var(--forest-dark);
+      color: var(--muted-text);
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div>
-      <h2 style="margin:0;">🌾 Smart Agriculture: Crop Yield & Market Intelligence</h2>
-      <small>Web API + Frontend Layer</small>
+  <nav class="navbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span>Smart Agro</span>
     </div>
-    <a href="http://localhost:8501" target="_blank">Open Streamlit Analytics (8501)</a>
-  </header>
+    <div class="nav-links">
+      <a href="#estimator">Yield Estimator</a>
+      <a href="#production">Top Crops</a>
+      <a href="#mandi">Mandi Prices</a>
+      <a href="http://localhost:8501" target="_blank" class="btn-pill">Analytics Dashboard</a>
+    </div>
+  </nav>
 
-  <div class="container">
-    <div class="kpis">
-      <div class="card">
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-tag">Original &amp; Data-Driven • Smart Agriculture</div>
+      <h1>Agriculture Matters, <span>Good Production</span></h1>
+      <p>
+        District-wise crop yield forecasting, seasonal production insights, and mandi price intelligence
+        designed for practical agricultural decision-making.
+      </p>
+      <div class="hero-actions">
+        <a href="#estimator" class="btn-pill">Explore Yield Estimator</a>
+        <a href="#mandi" class="btn-outline">Check Mandi Rates</a>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+    <section class="kpi-grid">
+      <div class="kpi-card">
         <div class="kpi-label">Total Records</div>
         <div class="kpi-value" id="kpi-records">-</div>
       </div>
-      <div class="card">
+      <div class="kpi-card">
         <div class="kpi-label">States Covered</div>
         <div class="kpi-value" id="kpi-states">-</div>
       </div>
-      <div class="card">
-        <div class="kpi-label">Crops Covered</div>
+      <div class="kpi-card">
+        <div class="kpi-label">Crops Tracked</div>
         <div class="kpi-value" id="kpi-crops">-</div>
       </div>
-    </div>
+    </section>
 
-    <div class="grid-2">
-      <div class="card">
+    <section class="panel panel-dark" style="margin-bottom:22px;">
+      <div class="hero-tag" style="margin-bottom:4px;">Key Staples &amp; Produce</div>
+      <h3 style="margin-bottom:6px;">Core Agricultural Commodities</h3>
+      <div class="crop-strip" id="crop-strip"></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="panel" id="estimator">
         <h3>Crop Yield Estimator</h3>
         <form id="predict-form">
           <label for="state">State</label>
@@ -158,35 +437,87 @@
           <label for="area">Area (Hectares)</label>
           <input type="number" step="0.01" id="area" name="area" value="100" />
 
-          <button type="submit">Predict Yield</button>
+          <button type="submit" class="btn-primary">Predict Yield</button>
         </form>
         <div id="predict-result" class="result-box" style="display:none;"></div>
       </div>
 
-      <div class="card">
-        <h3>Top Crops by Production</h3>
+      <div class="panel panel-dark" id="production">
+        <h3>Top Crops by Total Production</h3>
         <table>
           <thead>
-            <tr><th>Crop</th><th>Total Production</th></tr>
+            <tr>
+              <th>Crop</th>
+              <th>Total Production</th>
+            </tr>
           </thead>
           <tbody id="top-crops-body">
             <tr><td colspan="2">Loading...</td></tr>
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="panel" id="mandi">
       <h3>Mandi Price Explorer</h3>
-      <div style="display:flex; gap:10px; max-width:450px;">
-        <input type="text" id="mandi-filter" placeholder="Filter by commodity (e.g., Rice, Wheat)" />
-        <button type="button" onclick="loadMandi()" style="width:auto; margin-top:0;">Search</button>
+      <div class="search-row">
+        <input type="text" id="mandi-filter" placeholder="Filter by commodity (e.g., Rice, Wheat, Potato)" />
+        <button type="button" class="btn-search" onclick="loadMandi()">Search</button>
       </div>
-      <div id="mandi-output" style="margin-top:12px; font-size:13px; color:#52606d;">Loading mandi data...</div>
-    </div>
-  </div>
+      <div id="mandi-output" style="font-size:13px; color:#52606d;">Loading mandi data...</div>
+    </section>
+  </main>
+
+  <footer>
+    Smart Agriculture: Crop Yield &amp; Market Intelligence System
+  </footer>
 
   <script>
+    let activeCommodity = "";
+
+    function selectCommodity(cropName) {
+      activeCommodity = cropName;
+
+      document.querySelectorAll("#crop-strip .crop-pill").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.crop === cropName);
+        btn.classList.remove("highlight");
+      });
+
+      const cropSelect = document.getElementById("crop");
+      if (cropSelect) {
+        const match = Array.from(cropSelect.options).find(
+          (opt) => opt.value.toLowerCase() === cropName.toLowerCase()
+        );
+        if (match) {
+          cropSelect.value = match.value;
+        }
+      }
+
+      const mandiInput = document.getElementById("mandi-filter");
+      if (mandiInput) {
+        mandiInput.value = cropName;
+        loadMandi();
+      }
+    }
+
+    function renderCropStrip(items) {
+      const strip = document.getElementById("crop-strip");
+      const list = (items && items.length ? items.slice(0, 6).map((x) => x.crop) : [
+        "Coconut", "Sugarcane", "Rice", "Wheat", "Potato", "Cotton(Lint)"
+      ]);
+
+      strip.innerHTML = "";
+      list.forEach((cropName, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `crop-pill ${idx === 0 && !activeCommodity ? "active" : ""}`;
+        btn.dataset.crop = cropName;
+        btn.textContent = cropName;
+        btn.addEventListener("click", () => selectCommodity(cropName));
+        strip.appendChild(btn);
+      });
+    }
+
     async function loadSummary() {
       const res = await fetch("/api/summary");
       const data = await res.json();
@@ -197,11 +528,13 @@
       const tbody = document.getElementById("top-crops-body");
       if (!data.top_crops || !data.top_crops.length) {
         tbody.innerHTML = '<tr><td colspan="2">No production summary available</td></tr>';
-        return;
+      } else {
+        tbody.innerHTML = data.top_crops
+          .map(item => `<tr><td>${item.crop}</td><td>${Number(item.production).toLocaleString()}</td></tr>`)
+          .join("");
       }
-      tbody.innerHTML = data.top_crops
-        .map(item => `<tr><td>${item.crop}</td><td>${Number(item.production).toLocaleString()}</td></tr>`)
-        .join("");
+
+      renderCropStrip(data.top_crops);
     }
 
     function fillSelect(id, items) {
@@ -223,6 +556,9 @@
       fillSelect("season", data.seasons || []);
       if (data.states && data.states.length) {
         await loadDistricts(data.states[0]);
+      }
+      if (activeCommodity) {
+        selectCommodity(activeCommodity);
       }
     }
 
@@ -270,6 +606,7 @@
       out.innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
     }
 
+    renderCropStrip([]);
     loadSummary();
     loadOptions();
     loadMandi();
