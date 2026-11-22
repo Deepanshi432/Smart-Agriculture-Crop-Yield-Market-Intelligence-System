@@ -5,9 +5,9 @@ Analyse weather, soil and crop data to **predict crop yield**, **recommend suita
 
 | Module | Owner | Folder / Key Files | Status |
 |---|---|---|---|
-| Data analytics (cleaning, EDA, SQL, Streamlit dashboard) | Member 1 (Deepanshi) | `data-analytics/` (`app.py`, `notebooks/`, `sql/`) | Done |
-| Machine learning (yield model, crop recommender) | Member 2 (Lakshmi) | `ml/`, `models/`, `data-analytics/models/` | In Progress |
-| API + UI | TBD | `backend/`, `frontend/` | Later |
+| Data analytics (cleaning, EDA, SQL, Streamlit dashboard) | Deepanshi | `data-analytics/` (`app.py`, `notebooks/`, `sql/`) | Done |
+| Machine learning (yield model, crop recommender) | Lakshmi (with Deepanshi support) | `ml/`, `models/`, `data-analytics/models/` | In Progress / Baseline Ready |
+| API + UI (Flask backend & Smart Agro web frontend) | Completed by Deepanshi (Philip unavailable) | `Backend/app.py`, `Frontend/index.html` | Done |
 
 > **Note on Large Files & `.gitignore`:** GitHub enforces a **100 MB per-file size limit**. Large local artifacts such as trained model binaries (`*.pkl`), SQLite databases (`*.db`), and large processed CSV files are excluded via `.gitignore` and generated or loaded locally during development/execution.
 
@@ -16,10 +16,14 @@ Analyse weather, soil and crop data to **predict crop yield**, **recommend suita
 ## 1. What is in the project (folder structure)
 
 ```text
-Smart-Agriculture/
+Smart-Agriculture-Crop-Yield-Market-Intelligence-System/
 ├── README.md
 ├── requirements.txt
 ├── .gitignore
+├── Backend/
+│   └── app.py                    # Flask API (/api/health, /api/options, /api/summary, /api/predict, /api/mandi)
+├── Frontend/
+│   └── index.html                # Smart Agro web UI (Yield Estimator, Top Crops, Mandi Explorer)
 ├── models/                       # local model artifacts (gitignored if large)
 ├── data-analytics/
 │   ├── app.py                    # Streamlit interactive dashboard
@@ -39,4 +43,4 @@ Smart-Agriculture/
 │   ├── notebooks/                # 02_eda.ipynb, 03_sql_analysis.ipynb, eda_and_cleaning.py
 │   ├── scripts/                  # pipeline scripts (if run via CLI)
 │   └── sql/                      # queries.sql (+ local agriculture.db if generated)
-└── ml/                           # Member 2 (yield model & crop recommender)
+└── ml/                           # ML module folder (if present)
