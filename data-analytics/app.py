@@ -1,230 +1,252 @@
-from pathlib import Path
 import sqlite3
+from pathlib import Path
+
 import joblib
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 
 st.set_page_config(
-    page_title="Smart Agriculture: Crop Yield & Market Intelligence",
-    layout="wide"
+    page_title="Smart Agriculture Crop Yield & Market Intelligence",
+    layout="wide",
 )
 
-st.title("Smart Agriculture: Crop Yield & Market Intelligence")
+st.title("🌾 Smart Agriculture Crop Yield & Market Intelligence System")
+st.caption("Crop Yield Insights, Prediction & Mandi Market Analytics")
 
-current_file = Path(__file__).resolve()
-DATA_ANALYTICS_DIR = current_file.parents[1]
-PROCESSED_CSV = DATA_ANALYTICS_DIR / "data" / "processed" / "processed_crop_data.csv"
-MODEL_PATH = DATA_ANALYTICS_DIR / "models" / "crop_yield_model.pkl"
-DB_PATH = DATA_ANALYTICS_DIR / "sql" / "agriculture.db"
-
-NEEDED_COLS = [
-    "state", "district", "crop", "season", "year", "area", "production", "yield",
-    "state_encoded", "district_encoded", "crop_encoded", "season_encoded"
-]
+# Resolve paths relative to data-analytics/app.py
+APP_DIR = Path(__file__).resolve().parent  # .../data-analytics
+PROJECT_ROOT = APP_DIR.parent
 
 
-@st.cache_data(show_spinner=False)
-def load_fast_data(csv_path: Path) -> pd.DataFrame:
-    header = pd.read_csv(csv_path, nrows=0).columns.str.strip().tolist()
-    cols = [c for c in NEEDED_COLS if c in header]
-    df = pd.read_csv(csv_path, usecols=cols, low_memory=False)
+def resolve_first_existing(candidates: list[Path]) -> Path | None:
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
+
+
+PROCESSED_CSV = resolve_first_existing([
+    APP_DIR / "data" / "processed" / "processed_crop_data.csv",
+    PROJECT_ROOT / "data" / "processed" / "processed_crop_data.csv",
+])
+
+MODEL_PATH = resolve_first_existing([
+    APP_DIR / "models" / "crop_yield_model.pkl",
+    PROJECT_ROOT / "models" / "crop_yield_model.pkl",
+])
+
+DB_PATH = resolve_first_existing([
+    APP_DIR / "sql" / "agriculture.db",
+    PROJECT_ROOT / "sql" / "agriculture.db",
+])
+
+
+@st.cache_data
+def load_data(csv_path: Path) -> pd.DataFrame:
+    df = pd.read_csv(csv_path)
     df.columns = df.columns.str.strip()
-
-    for col in ["state", "district", "crop", "season"]:
-        if col in df.columns:
-            df[col] = df[col].astype(str).str.strip().astype("category")
-
-    for col in ["year", "area", "production", "yield"]:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
     return df
 
 
-@st.cache_resource(show_spinner=False)
+@st.cache_resource
 def load_model(model_path: Path):
     return joblib.load(model_path)
 
 
-@st.cache_data(show_spinner=False)
-def load_mandi_top(db_path: Path) -> pd.DataFrame:
-    if not db_path.exists():
-        return pd.DataFrame()
-    conn = sqlite3.connect(db_path)
-    try:
-        tables = pd.read_sql("SELECT name FROM sqlite_master WHERE type='table'", conn)["name"].tolist()
-        if "mandi_prices" not in tables:
-            return pd.DataFrame()
-        return pd.read_sql(
-            """
-            SELECT commodity, ROUND(AVG(modal_price)) AS avg_modal_price, COUNT(*) AS markets
-            FROM mandi_prices
-            GROUP BY commodity
-            HAVING markets >= 20
-            ORDER BY avg_modal_price DESC
-            LIMIT 10
-            """,
-            conn
-        )
-    finally:
-        conn.close()
-
-
-if not PROCESSED_CSV.exists():
-    st.error(f"Processed CSV not found at: {PROCESSED_CSV}")
+if PROCESSED_CSV is None:
+    expected_csv = APP_DIR / "data" / "processed" / "processed_crop_data.csv"
+    st.error(f"Processed CSV not found at: {expected_csv}")
     st.stop()
 
-with st.spinner("Loading dataset..."):
-    df = load_fast_data(PROCESSED_CSV)
+df = load_data(PROCESSED_CSV)
+model = load_model(MODEL_PATH) if MODEL_PATH is not None else None
 
-# --- Top Filter Row ---
-f1, f2, f3, f4 = st.columns([1.2, 1.2, 1.2, 2.0])
+# --- Helper to match case-insensitive column names ---
+col_lookup = {c.lower(): c for c in df.columns}
 
-crops = ["All"] + sorted(df["crop"].dropna().unique().tolist()) if "crop" in df.columns else ["All"]
-default_crop_idx = crops.index("Rice") if "Rice" in crops else 0
-sel_crop = f1.selectbox("Crop", crops, index=default_crop_idx)
 
-states = ["All"] + sorted(df["state"].dropna().unique().tolist()) if "state" in df.columns else ["All"]
-sel_state = f2.selectbox("State", states, index=0)
+def col(name: str) -> str | None:
+    return col_lookup.get(name.lower())
 
-seasons = ["All"] + sorted(df["season"].dropna().unique().tolist()) if "season" in df.columns else ["All"]
-sel_season = f3.selectbox("Season", seasons, index=0)
 
-if "year" in df.columns and df["year"].notna().any():
-    min_yr = int(df["year"].min())
-    max_yr = int(df["year"].max())
-    default_end = min(max_yr, 2017) if max_yr >= min_yr else max_yr
-    yr_range = f4.slider("Years", min_value=min_yr, max_value=max_yr, value=(min_yr, default_end))
-    yr_min, yr_max = int(yr_range[0]), int(yr_range[1])
-else:
-    yr_min, yr_max = None, None
+state_col = col("state")
+district_col = col("district")
+crop_col = col("crop")
+season_col = col("season")
+year_col = col("year") or col("crop_year")
+area_col = col("area")
+prod_col = col("production")
+yield_col = col("yield")
 
-# Filter directly in-memory (no large dataframe caching overhead per click)
-sub = df
-if sel_crop != "All" and "crop" in sub.columns:
-    sub = sub[sub["crop"] == sel_crop]
-if sel_state != "All" and "state" in sub.columns:
-    sub = sub[sub["state"] == sel_state]
-if sel_season != "All" and "season" in sub.columns:
-    sub = sub[sub["season"] == sel_season]
-if yr_min is not None and yr_max is not None and "year" in sub.columns:
-    sub = sub[(sub["year"] >= yr_min) & (sub["year"] <= yr_max)]
-
-records = len(sub)
-avg_yield_val = float(sub["yield"].mean()) if ("yield" in sub.columns and records > 0) else 0.0
-tot_prod_val = float(sub["production"].sum()) if ("production" in sub.columns and records > 0) else 0.0
-dist_cnt = int(sub["district"].nunique()) if ("district" in sub.columns and records > 0) else 0
-
-# --- KPI Cards ---
+# --- Top KPIs ---
 k1, k2, k3, k4 = st.columns(4)
-k1.metric("Records", f"{records:,}")
-k2.metric("Avg yield (tonnes/ha)", f"{avg_yield_val:.2f}")
-k3.metric("Total production", f"{tot_prod_val:,.0f}")
-k4.metric("Districts", f"{dist_cnt:,}")
+k1.metric("Total Records", f"{len(df):,}")
+k2.metric("States Covered", f"{df[state_col].nunique()}" if state_col else "N/A")
+k3.metric("Crops Covered", f"{df[crop_col].nunique()}" if crop_col else "N/A")
+k4.metric(
+    "Average Yield",
+    f"{df[yield_col].mean():.2f}" if yield_col else "N/A",
+)
 
-# --- Two Charts Side-by-Side ---
-left_col, right_col = st.columns([1, 1.25])
+st.divider()
 
-with left_col:
-    crop_label = sel_crop if sel_crop != "All" else "All Crops"
-    st.subheader(f"{crop_label}: average yield by year")
-    if records > 0 and "year" in sub.columns and "yield" in sub.columns:
-        yearly_yield = (
-            sub.groupby("year", as_index=False, observed=True)["yield"]
-            .mean()
-            .sort_values("year")
-        )
-        fig_yr = px.line(yearly_yield, x="year", y="yield", markers=True)
-        fig_yr.update_traces(line=dict(color="#111111", width=2), marker=dict(color="#111111", size=6))
-        fig_yr.update_layout(
-            margin=dict(l=55, r=20, t=20, b=45),
-            xaxis_title="year",
-            yaxis_title="yield",
-            plot_bgcolor="white",
-            paper_bgcolor="white",
-        )
-        st.plotly_chart(fig_yr, use_container_width=True)
-    else:
-        st.info("No data available for selected filters.")
+# --- Sidebar: Yield Prediction ---
+st.sidebar.header("🌱 Crop Yield Predictor")
 
-with right_col:
-    st.subheader("Top 10 districts by yield")
-    if records > 0 and "district" in sub.columns and "yield" in sub.columns:
-        grp_cols = ["district", "state"] if "state" in sub.columns else ["district"]
-        top_dist = (
-            sub.groupby(grp_cols, as_index=False, observed=True)["yield"]
-            .mean()
-            .dropna(subset=["yield"])
-            .sort_values("yield", ascending=False)
-            .head(10)
+if model is None:
+    st.sidebar.warning("Trained model (`crop_yield_model.pkl`) not found locally.")
+else:
+    encoded_map = {
+        "state_encoded": state_col,
+        "district_encoded": district_col,
+        "crop_encoded": crop_col,
+        "season_encoded": season_col,
+    }
+    model_features = list(
+        getattr(
+            model,
+            "feature_names_in_",
+            [
+                c
+                for c in [
+                    "state_encoded",
+                    "district_encoded",
+                    "crop_encoded",
+                    "season_encoded",
+                    "year",
+                    "area",
+                ]
+                if col(c) is not None
+            ],
         )
-        if "state" in top_dist.columns:
-            top_dist["district_label"] = top_dist["district"].astype(str) + " (" + top_dist["state"].astype(str) + ")"
-        else:
-            top_dist["district_label"] = top_dist["district"].astype(str)
+    )
 
-        top_dist = top_dist.sort_values("yield", ascending=True)
-        fig_dist = px.bar(
-            top_dist,
-            x="yield",
-            y="district_label",
-            orientation="h"
-        )
-        fig_dist.update_traces(marker_color="#111111")
-        fig_dist.update_layout(
-            margin=dict(l=220, r=25, t=20, b=45),
-            xaxis_title="yield",
-            yaxis_title="",
-            yaxis=dict(automargin=True, tickfont=dict(size=11)),
-            plot_bgcolor="white",
-            paper_bgcolor="white",
-        )
-        st.plotly_chart(fig_dist, use_container_width=True)
-    else:
-        st.info("No district data available for selected filters.")
+    input_values: dict[str, float | int] = {}
+    selected_state_val = None
 
-# --- Sidebar: Yield Predictor (Lazy model load only when button clicked) ---
-st.sidebar.header("Crop Yield Predictor")
-if MODEL_PATH.exists():
-    feat_choices = ["state", "district", "crop", "season"]
-    p_state = st.sidebar.selectbox("Predict State", sorted(df["state"].dropna().unique().tolist()), key="p_state") if "state" in df.columns else None
-    d_pool = df.loc[df["state"] == p_state, "district"] if ("state" in df.columns and "district" in df.columns and p_state is not None) else df.get("district")
-    p_dist = st.sidebar.selectbox("Predict District", sorted(d_pool.dropna().unique().tolist()), key="p_dist") if d_pool is not None else None
-    p_crop = st.sidebar.selectbox("Predict Crop", sorted(df["crop"].dropna().unique().tolist()), key="p_crop") if "crop" in df.columns else None
-    p_season = st.sidebar.selectbox("Predict Season", sorted(df["season"].dropna().unique().tolist()), key="p_season") if "season" in df.columns else None
-    p_year = st.sidebar.number_input("Predict Year", min_value=1997, max_value=2026, value=2020, key="p_year")
-    p_area = st.sidebar.number_input("Predict Area (ha)", min_value=0.1, value=100.0, key="p_area")
+    for feat in model_features:
+        feat_lower = feat.lower()
+        enc_target = col(feat)
+
+        if feat_lower == "state_encoded" and state_col and enc_target:
+            states = sorted(df[state_col].dropna().astype(str).unique())
+            sel_s = st.sidebar.selectbox("State", states)
+            selected_state_val = sel_s
+            input_values[feat] = int(
+                df.loc[df[state_col].astype(str) == sel_s, enc_target].iloc[0]
+            )
+
+        elif feat_lower == "district_encoded" and district_col and enc_target:
+            if state_col and selected_state_val is not None:
+                dist_series = df.loc[
+                    df[state_col].astype(str) == selected_state_val, district_col
+                ]
+            else:
+                dist_series = df[district_col]
+            districts = sorted(dist_series.dropna().astype(str).unique())
+            sel_d = st.sidebar.selectbox("District", districts)
+            input_values[feat] = int(
+                df.loc[df[district_col].astype(str) == sel_d, enc_target].iloc[0]
+            )
+
+        elif feat_lower == "crop_encoded" and crop_col and enc_target:
+            crops = sorted(df[crop_col].dropna().astype(str).unique())
+            sel_c = st.sidebar.selectbox("Crop", crops)
+            input_values[feat] = int(
+                df.loc[df[crop_col].astype(str) == sel_c, enc_target].iloc[0]
+            )
+
+        elif feat_lower == "season_encoded" and season_col and enc_target:
+            seasons = sorted(df[season_col].dropna().astype(str).unique())
+            sel_sn = st.sidebar.selectbox("Season", seasons)
+            input_values[feat] = int(
+                df.loc[df[season_col].astype(str) == sel_sn, enc_target].iloc[0]
+            )
+
+        elif feat_lower in ("year", "crop_year") and year_col:
+            min_y = int(df[year_col].min())
+            max_y = int(max(df[year_col].max(), 2026))
+            default_y = min(max_y, 2020)
+            input_values[feat] = st.sidebar.number_input(
+                "Crop Year", min_value=min_y, max_value=max_y, value=default_y
+            )
+
+        elif feat_lower == "area" and area_col:
+            input_values[feat] = st.sidebar.number_input(
+                "Area (Hectares)", min_value=0.1, value=100.0
+            )
+
+        elif enc_target is not None and pd.api.types.is_numeric_dtype(df[enc_target]):
+            input_values[feat] = float(df[enc_target].median())
 
     if st.sidebar.button("Predict Yield"):
-        model = load_model(MODEL_PATH)
-        feat_names = list(getattr(model, "feature_names_in_", []))
-        row = {"year": float(p_year), "area": float(p_area)}
+        missing_feats = [f for f in model_features if f not in input_values]
+        if missing_feats:
+            st.sidebar.error(f"Missing model features in dataset: {missing_feats}")
+        else:
+            X_input = pd.DataFrame([input_values])[model_features]
+            pred_yield = float(model.predict(X_input)[0])
+            st.sidebar.success(f"Predicted Yield: **{pred_yield:.2f}**")
 
-        mapping = {
-            "state_encoded": ("state", p_state),
-            "district_encoded": ("district", p_dist),
-            "crop_encoded": ("crop", p_crop),
-            "season_encoded": ("season", p_season),
-        }
-        for enc_col, (raw_col, val) in mapping.items():
-            if enc_col in feat_names and raw_col in df.columns and enc_col in df.columns and val is not None:
-                match = df.loc[df[raw_col] == val, enc_col]
-                if not match.empty:
-                    row[enc_col] = float(match.iloc[0])
+# --- Dashboard Tabs ---
+tab1, tab2 = st.tabs(["📊 Production & Yield Insights", "🏪 Mandi Prices (SQL)"])
 
-        for col in feat_names:
-            if col not in row and col in df.columns:
-                row[col] = float(df[col].median())
+with tab1:
+    left, right = st.columns(2)
 
-        if feat_names:
-            X_pred = pd.DataFrame([row])[feat_names]
-            pred_out = float(model.predict(X_pred)[0])
-            st.sidebar.success(f"Predicted Yield: **{pred_out:.2f}**")
-else:
-    st.sidebar.info("Saved model not found.")
+    if crop_col and prod_col:
+        with left:
+            st.subheader("Top 10 Crops by Total Production")
+            top_crops = (
+                df.groupby(crop_col, as_index=False)[prod_col]
+                .sum()
+                .sort_values(prod_col, ascending=False)
+                .head(10)
+            )
+            st.bar_chart(top_crops.set_index(crop_col)[prod_col])
+    else:
+        with left:
+            st.info("Crop or Production column not found in dataset.")
 
-mandi_top = load_mandi_top(DB_PATH)
-if not mandi_top.empty:
-    with st.expander("Mandi Prices (SQLite: mandi_prices)"):
-        st.dataframe(mandi_top, use_container_width=True)
+    if state_col and prod_col:
+        with right:
+            st.subheader("Top 10 States by Total Production")
+            top_states = (
+                df.groupby(state_col, as_index=False)[prod_col]
+                .sum()
+                .sort_values(prod_col, ascending=False)
+                .head(10)
+            )
+            st.bar_chart(top_states.set_index(state_col)[prod_col])
+    else:
+        with right:
+            st.info("State or Production column not found in dataset.")
+
+with tab2:
+    if DB_PATH is None:
+        st.info("SQLite database (`agriculture.db`) not found locally.")
+    else:
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            tables = pd.read_sql(
+                "SELECT name FROM sqlite_master WHERE type='table'", conn
+            )["name"].tolist()
+            if "mandi_prices" in tables:
+                mandi_df = pd.read_sql(
+                    """
+                    SELECT commodity, ROUND(AVG(modal_price)) AS avg_modal_price, COUNT(*) AS markets
+                    FROM mandi_prices
+                    GROUP BY commodity
+                    HAVING markets >= 20
+                    ORDER BY avg_modal_price DESC
+                    LIMIT 10
+                    """,
+                    conn,
+                )
+                st.subheader("Top 10 Commodities by Average Modal Price")
+                st.dataframe(mandi_df, use_container_width=True)
+            else:
+                st.info("`mandi_prices` table not found in `agriculture.db`.")
+            conn.close()
+        except Exception as exc:
+            st.warning(f"Could not query `agriculture.db`: {exc}")
