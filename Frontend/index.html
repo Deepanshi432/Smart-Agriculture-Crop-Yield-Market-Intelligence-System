@@ -9,7 +9,6 @@
       --bg-cream: #f4f1ea;
       --forest-dark: #1d2b22;
       --forest-mid: #27392d;
-      --forest-card: #223227;
       --gold: #e5a93c;
       --gold-hover: #cf9226;
       --sage-text: #d8e2dc;
@@ -20,6 +19,10 @@
 
     * {
       box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
@@ -41,6 +44,9 @@
       flex-wrap: wrap;
       gap: 14px;
       border-bottom: 1px solid var(--border-soft);
+      position: sticky;
+      top: 0;
+      z-index: 20;
     }
 
     .brand {
@@ -209,6 +215,7 @@
       padding: 24px;
       box-shadow: 0 4px 16px rgba(28, 38, 31, 0.06);
       border: 1px solid #e5e1d8;
+      margin-bottom: 22px;
     }
 
     .panel-dark {
@@ -299,8 +306,7 @@
       transform: translateY(-1px);
     }
 
-    .crop-pill.active,
-    .crop-pill.highlight {
+    .crop-pill.active {
       background: var(--gold);
       color: var(--ink-dark);
       border-color: var(--gold);
@@ -355,6 +361,21 @@
       white-space: nowrap;
     }
 
+    .dashboard-frame-wrap {
+      margin-top: 12px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-soft);
+      background: #141e18;
+    }
+
+    .dashboard-frame {
+      width: 100%;
+      height: 760px;
+      border: 0;
+      display: block;
+    }
+
     footer {
       background: var(--forest-dark);
       color: var(--muted-text);
@@ -374,7 +395,7 @@
       <a href="#estimator">Yield Estimator</a>
       <a href="#production">Top Crops</a>
       <a href="#mandi">Mandi Prices</a>
-      <a href="http://localhost:8501" target="_blank" class="btn-pill">Analytics Dashboard</a>
+      <a href="#analytics-dashboard" class="btn-pill">Analytics Dashboard</a>
     </div>
   </nav>
 
@@ -388,7 +409,7 @@
       </p>
       <div class="hero-actions">
         <a href="#estimator" class="btn-pill">Explore Yield Estimator</a>
-        <a href="#mandi" class="btn-outline">Check Mandi Rates</a>
+        <a href="#analytics-dashboard" class="btn-outline">View Analytics Dashboard</a>
       </div>
     </div>
   </section>
@@ -409,7 +430,7 @@
       </div>
     </section>
 
-    <section class="panel panel-dark" style="margin-bottom:22px;">
+    <section class="panel panel-dark">
       <div class="hero-tag" style="margin-bottom:4px;">Key Staples &amp; Produce</div>
       <h3 style="margin-bottom:6px;">Core Agricultural Commodities</h3>
       <div class="crop-strip" id="crop-strip"></div>
@@ -466,6 +487,27 @@
       </div>
       <div id="mandi-output" style="font-size:13px; color:#52606d;">Loading mandi data...</div>
     </section>
+
+    <section class="panel panel-dark" id="analytics-dashboard">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div class="hero-tag" style="margin-bottom:2px;">Interactive Analytics Workspace</div>
+          <h3 style="margin:0;">Analytics Dashboard (Streamlit)</h3>
+        </div>
+        <a href="http://localhost:8501" target="_blank" class="btn-outline">Open in Full Tab</a>
+      </div>
+      <p style="color:var(--muted-text); font-size:13px; margin:8px 0 0 0;">
+        Run <code>streamlit run data-analytics/app.py</code> in a second terminal so the live dashboard loads below at <code>http://localhost:8501</code>.
+      </p>
+      <div class="dashboard-frame-wrap">
+        <iframe
+          src="http://localhost:8501"
+          title="Smart Agriculture Analytics Dashboard"
+          class="dashboard-frame"
+          loading="lazy"
+        ></iframe>
+      </div>
+    </section>
   </main>
 
   <footer>
@@ -480,7 +522,6 @@
 
       document.querySelectorAll("#crop-strip .crop-pill").forEach((btn) => {
         btn.classList.toggle("active", btn.dataset.crop === cropName);
-        btn.classList.remove("highlight");
       });
 
       const cropSelect = document.getElementById("crop");
